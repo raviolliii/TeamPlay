@@ -1,0 +1,89 @@
+/*
+ * #434738
+ * #b5d43c
+ * #d9ef81
+ * #f7f7f7
+*/
+
+body {
+    background-color: #222426;
+    color: #c6c6c6;
+    font-family: avenir;
+}
+
+.splash {
+    width: 100%;
+    color: #b5d43c;
+    font-size: 1.4rem;
+    text-align: center;
+    top: 10%;
+    position: fixed;
+}
+
+.container {
+    opacity: 1;
+    margin-top: 10%;
+    position: relative;
+    transition: opacity 0.6s ease-out, margin-top 0.6s ease-out;
+}
+
+.container.hidden {
+    opacity: 0;
+    margin-top: 9%;
+}
+
+.cover {
+    box-shadow: -1rem 1rem 1rem #101010;
+    vertical-align: top;
+    display: inline-block;
+}
+
+.song {
+    width: 60%;
+    margin: 2% 6%;
+    display: inline-block;
+    position: relative;
+}
+
+.song .name {
+    color: #b5d43c;
+    font-size: 2.2rem;
+}
+
+.song .artist {
+    font-size: 1.2rem;
+}
+
+.mediaContainer {
+    font-size: 1.25rem;
+    margin-top: 10%;
+}
+
+.media {
+    color: #454545;
+    margin-right: 2%;
+    display: inline-block;
+}
+
+.media:hover {
+    cursor: pointer;
+    filter: brightness(120%);
+}
+
+.progress {
+    background-color: #404040;
+    height: 4px;
+    border: 1rem;
+    margin-top: 2%;
+}
+
+.progress:hover {
+    cursor: pointer;
+}
+
+.progress-bar {
+    background-color: #b5d43c;
+    border-radius: 1rem;
+}
+
+
