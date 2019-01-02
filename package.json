@@ -8,8 +8,10 @@
     },
     "author": "",
     "license": "ISC",
+    "dependencies": {
+        "express": "*"
+    },
     "devDependencies": {
-        "express": "*",
         "nodemon": "^1.18.9"
     }
 }
