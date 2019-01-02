@@ -89,7 +89,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
 
     //connect the player
     player.connect();
-    
+
     //********************************************
     // Base Functions
     //********************************************
