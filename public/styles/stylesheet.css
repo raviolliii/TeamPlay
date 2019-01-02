@@ -38,6 +38,11 @@ body {
     display: inline-block;
 }
 
+.cover img {
+    width: 300px;
+    height: 300px;
+}
+
 .song {
     width: 60%;
     margin: 2% 6%;

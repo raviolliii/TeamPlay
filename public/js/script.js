@@ -1,12 +1,69 @@
 //when spotify web sdk loads
 window.onSpotifyWebPlaybackSDKReady = function() {
 
+    const clientId = "87cf352cff9c4531874906ec651fd8d6";
+    const redirectUri = "http://localhost:8080/";
+    const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
+    const room = window.location.href.split("?room=")[1];
+    var admin = true;
+
+    //********************************************
+    // Spotify Playback Initialization
+    //********************************************
+
+    if (!getUrlHash() && !getCookies()) {
+        let url = "https://accounts.spotify.com/authorize?";
+        let client = `client_id=${clientId}&`;
+        let res = `response_type=token&`;
+        let red = `redirect_uri=${redirectUri}&`;
+        let scope = `scope=${scopes}`;
+        window.location.href = url + client + res + red + scope;
+    }
+    else if (getUrlHash()) {
+        let {access_token, expires_in} = getUrlHash();
+        document.cookie = `token=${access_token}; max-age=${expires_in}`
+        window.location.href = window.location.host;
+    }
+
+    //********************************************
+    // Firebase Setup
+    //********************************************
+
+    const fbConfig = {
+        apiKey: "AIzaSyBDd7bm48uwmG3-bryRQOitJm4D6WduvOg",
+        authDomain: "teamplay-12f75.firebaseapp.com",
+        databaseURL: "https://teamplay-12f75.firebaseio.com",
+        projectId: "teamplay-12f75",
+        storageBucket: "teamplay-12f75.appspot.com",
+        messagingSenderId: "194743848047"
+    };
+
+    firebase.initializeApp(fbConfig);
+
+    //write song data to database at room name
+    function writeRoomData(room, data) {
+        firebase.database().ref(room).update(data);
+    }
+
+    //read/set listener for room data
+    function getRoomData(room, callback) {
+        firebase.database().ref(room).once("value", function(snapshot) {
+            callback(snapshot.val());
+        });
+    }
+
+    getRoomData(room, function(data) {
+        if (data) {
+            admin = false;
+        }
+    });
+
     //********************************************
     // Spotify Playback Initialization
     //********************************************
 
     //initialize Spotify Player with token
-    const token = getURLParam("at");
+    const token = getCookies().token;
     const player = new Spotify.Player({
         name: "Team Play",
         getOAuthToken: cb => { cb(token); }
@@ -22,6 +79,11 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     });
     player.addListener("ready", ({ device_id }) => {
         transferPlayback(token, device_id, setEventListeners);
+        getRoomData(room, function(data) {
+            if (data) {
+                playSong(token, device_id, data);
+            }
+        });
     });
     player.addListener('player_state_changed', stateChangeHandler);
 
@@ -37,11 +99,31 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         return document.querySelector(selector);
     }
 
-    //gets URL params (for tokens)
-    function getURLParam(param) {
-        const url = new URL(window.location.href);
-        return url.searchParams.get(param);
+    //parse cookies and return an object with the data
+    function parseData(line, delim) {
+        let data = line.split(delim)
+            .reduce(function(acc, curr) {
+                let key = curr.split("=")[0];
+                let value = curr.split("=")[1];
+                key ? acc[key] = value : null;
+                return acc;
+            }, {});
+        return Object.keys(data).length ? data : null;
     }
+
+    //gets cookies in object form
+    function getCookies() {
+        return parseData(document.cookie, "; ");
+    }
+
+    //gets URL hash in object form
+    function getUrlHash() {
+        return parseData(window.location.hash.slice(1), "&");
+    }
+
+    //********************************************
+    // UI Functions
+    //********************************************
 
     //updates progress bar using current state
     function updateProgress() {
@@ -59,9 +141,9 @@ window.onSpotifyWebPlaybackSDKReady = function() {
 
     //updates song title/artists using given data
     function updateSongInfo(data) {
-        $(".cover").innerHTML = `<img src = "${data.imgSrc}"/>`;
+        $(".cover").innerHTML = `<img src = "${data.imgUrl}"/>`;
         $(".song .name").innerHTML = data.name;
-        $(".song .artist").innerHTML = data.artist;
+        $(".song .artist").innerHTML = data.artists;
         $(".splash").style.visibility = "hidden";
         $(".container").classList.remove("hidden");
         updateProgress();
@@ -71,9 +153,24 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     // Spotify Playback Functions
     //********************************************
 
+    //play specific song
+    function playSong(token, deviceId, {uri, position}) {
+        let url = "https://api.spotify.com/v1/me/player/play?device_id=" + deviceId;
+        fetch(url, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                uris: [uri],
+                position_ms: position
+            })
+        }).catch(console.error);
+    }
+
     //transfer main playback to given device id (Team Play)
     function transferPlayback(token, device, callback) {
-        const url = "https://api.spotify.com/v1/me/player";
+        let url = "https://api.spotify.com/v1/me/player";
         fetch(url, {
             method: "PUT",
             headers: {
@@ -90,13 +187,18 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     //handles playback state changes
     //gets song data (name, artists, etc.) and updates UI
     function stateChangeHandler({ position, duration, track_window: { current_track } }) {
-        updateSongInfo({
-            imgSrc: current_track.album.images[0].url,
+        let data = {
+            uri: current_track.uri,
+            imgUrl: current_track.album.images[0].url,
             name: current_track.name,
-            artist: current_track.artists.map(e => e.name).join(", "),
+            artists: current_track.artists.map(e => e.name).join(", "),
             position: position,
             duration: duration
-        });
+        };
+        updateSongInfo(data);
+        if (room && admin) {
+            writeRoomData(room, data);
+        }
     }
 
     //toggles playback and playback icon
@@ -137,4 +239,3 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     }
 
 };
-
