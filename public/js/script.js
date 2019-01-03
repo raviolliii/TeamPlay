@@ -2,15 +2,15 @@
 window.onSpotifyWebPlaybackSDKReady = function() {
 
     const clientId = "87cf352cff9c4531874906ec651fd8d6";
-    const redirectUri = "https://team--play.herokuapp.com/";
-    //const redirectUri = "http://localhost:8080/";
+    //const redirectUri = "https://team--play.herokuapp.com/";
+    const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
-    const room = window.location.href.split("?room=")[1];
+    const room = window.location.href.split("?room=")[1] || null;
     var device = "";
     var admin = true;
 
     //********************************************
-    // Spotify Playback Initialization
+    // Spotify Authentication
     //********************************************
 
     if (!getUrlHash() && !getCookies()) {
@@ -49,24 +49,33 @@ window.onSpotifyWebPlaybackSDKReady = function() {
 
     //read room data
     function getRoomData(room, callback) {
+        if (!room) {
+            callback(null);
+            return;
+        }
         firebase.database().ref(room).once("value", function(snapshot) {
             callback(snapshot.val());
         });
     }
 
-    getRoomData(room, function(data) {
-        if (data) {
-            admin = false;
-        }
-
+    function connectRoom(room) {
         firebase.database().ref(room).on("value", function(snapshot) {
-            console.log("updated");
             if (!admin && snapshot.val()) {
-                console.log("Updating song" + snapshot.val().name);
+                console.log("connected to room " + room)
+                let {name, position} = snapshot.val();
+                if (name === $(".name").innerText) {
+                    console.log("seeking");
+                    player.seek(position).catch(console.error);
+                    return;
+                }
                 playSong(token, device, snapshot.val());
             }
         });
-    });
+    }
+
+    function disconnectRoom(room) {
+        firebase.database().ref(room).off();
+    }
 
     //********************************************
     // Spotify Playback Initialization
@@ -89,14 +98,15 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     });
     player.addListener("ready", ({ device_id }) => {
         device = device_id;
-        transferPlayback(token, device_id, setEventListeners);
-        if (room) {
-            getRoomData(room, function(data) {
-                if (data) {
-                    playSong(token, device_id, data);
-                }
-            });
-        }
+        getRoomData(room, function(data) {
+            setEventListeners();
+            if (data) {
+                admin = false;
+                connectRoom(room);
+                return;
+            }
+            transferPlayback(token, device_id);
+        });
     });
     player.addListener('player_state_changed', stateChangeHandler);
 
