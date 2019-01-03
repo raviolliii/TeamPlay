@@ -57,13 +57,12 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         if (data) {
             admin = false;
         }
-    });
 
-    firebase.database().ref(room).on("value", function(snapshot) {
-        console.log("changed");
-        if (!admin && snapshot.val()) {
-            updateSongInfo(snapshot.val());
-        }
+        firebase.database().ref(room).on("value", function(snapshot) {
+            if (!admin && snapshot.val()) {
+                updateSongInfo(snapshot.val());
+            }
+        });
     });
 
     //********************************************
