@@ -3,6 +3,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
 
     const clientId = "87cf352cff9c4531874906ec651fd8d6";
     const redirectUri = "https://team--play.herokuapp.com/";
+    //const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
     const room = window.location.href.split("?room=")[1];
     var admin = true;
@@ -22,7 +23,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     else if (getUrlHash()) {
         let {access_token, expires_in} = getUrlHash();
         document.cookie = `token=${access_token}; max-age=${expires_in}`
-        window.location.href = window.location.host;
+        window.location.href = window.location.origin;
     }
 
     //********************************************
@@ -45,7 +46,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         firebase.database().ref(room).update(data);
     }
 
-    //read/set listener for room data
+    //read room data
     function getRoomData(room, callback) {
         firebase.database().ref(room).once("value", function(snapshot) {
             callback(snapshot.val());
@@ -55,6 +56,12 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     getRoomData(room, function(data) {
         if (data) {
             admin = false;
+        }
+    });
+
+    firebase.database().ref(room).once("value", function(snapshot) {
+        if (!admin && snapshot.val()) {
+            updateSongInfo(snapshot.val());
         }
     });
 
@@ -79,11 +86,13 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     });
     player.addListener("ready", ({ device_id }) => {
         transferPlayback(token, device_id, setEventListeners);
-        getRoomData(room, function(data) {
-            if (data) {
-                playSong(token, device_id, data);
-            }
-        });
+        if (room) {
+            getRoomData(room, function(data) {
+                if (data) {
+                    playSong(token, device_id, data);
+                }
+            });
+        }
     });
     player.addListener('player_state_changed', stateChangeHandler);
 
@@ -154,8 +163,8 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     //********************************************
 
     //play specific song
-    function playSong(token, deviceId, {uri, position}) {
-        let url = "https://api.spotify.com/v1/me/player/play?device_id=" + deviceId;
+    function playSong(token, device, {uri, position}) {
+        let url = "https://api.spotify.com/v1/me/player/play?device_id=" + device;
         fetch(url, {
             method: "PUT",
             headers: {
