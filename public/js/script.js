@@ -59,7 +59,8 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         }
     });
 
-    firebase.database().ref(room).once("value", function(snapshot) {
+    firebase.database().ref(room).on("value", function(snapshot) {
+        console.log("changed");
         if (!admin && snapshot.val()) {
             updateSongInfo(snapshot.val());
         }
