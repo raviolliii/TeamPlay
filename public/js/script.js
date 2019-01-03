@@ -59,7 +59,9 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         }
 
         firebase.database().ref(room).on("value", function(snapshot) {
+            console.log("updated");
             if (!admin && snapshot.val()) {
+                console.log("DB UPDATE -> UI")
                 updateSongInfo(snapshot.val());
             }
         });
