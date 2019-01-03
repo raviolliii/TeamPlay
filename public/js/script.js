@@ -6,6 +6,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     //const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
     const room = window.location.href.split("?room=")[1];
+    var device = "";
     var admin = true;
 
     //********************************************
@@ -61,8 +62,8 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         firebase.database().ref(room).on("value", function(snapshot) {
             console.log("updated");
             if (!admin && snapshot.val()) {
-                console.log("DB UPDATE -> UI")
-                updateSongInfo(snapshot.val());
+                console.log("Updating song" + snapshot.val().name);
+                playSong(token, device, snapshot.val());
             }
         });
     });
@@ -87,6 +88,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         console.log("Device ID has gone offline", device_id);
     });
     player.addListener("ready", ({ device_id }) => {
+        device = device_id;
         transferPlayback(token, device_id, setEventListeners);
         if (room) {
             getRoomData(room, function(data) {
