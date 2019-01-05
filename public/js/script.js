@@ -2,8 +2,8 @@
 window.onSpotifyWebPlaybackSDKReady = function() {
 
     const clientId = "87cf352cff9c4531874906ec651fd8d6";
-    //const redirectUri = "https://team--play.herokuapp.com/";
-    const redirectUri = "http://localhost:8080/";
+    const redirectUri = "https://team--play.herokuapp.com/";
+    //const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
     const room = window.location.href.split("?room=")[1] || null;
     $(".room").innerText = room || "Private";
