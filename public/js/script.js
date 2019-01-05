@@ -2,10 +2,11 @@
 window.onSpotifyWebPlaybackSDKReady = function() {
 
     const clientId = "87cf352cff9c4531874906ec651fd8d6";
-    const redirectUri = "https://team--play.herokuapp.com/";
-    //const redirectUri = "http://localhost:8080/";
+    //const redirectUri = "https://team--play.herokuapp.com/";
+    const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
     const room = window.location.href.split("?room=")[1] || null;
+    $(".room").innerText = room || "Private";
     var device = "";
     var admin = true;
 
@@ -19,12 +20,13 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         let res = `response_type=token&`;
         let red = `redirect_uri=${redirectUri}&`;
         let scope = `scope=${scopes}`;
-        window.location.href = url + client + res + red + scope;
+        let state = room ? `&state=${room}` : "";
+        window.location.href = url + client + res + red + scope + state;
     }
     else if (getUrlHash()) {
-        let {access_token, expires_in} = getUrlHash();
+        let {access_token, expires_in, state} = getUrlHash();
         document.cookie = `token=${access_token}; max-age=${expires_in}`
-        window.location.href = window.location.origin;
+        window.location.href = window.location.origin + (state ? `/?room=${state}` : "");
     }
 
     //********************************************
@@ -59,9 +61,9 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     }
 
     function connectRoom(room) {
+        console.log("connected to room " + room)
         firebase.database().ref(room).on("value", function(snapshot) {
             if (!admin && snapshot.val()) {
-                console.log("connected to room " + room)
                 let {name, position} = snapshot.val();
                 if (name === $(".name").innerText) {
                     console.log("seeking");
@@ -171,6 +173,33 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         $(".container").classList.remove("hidden");
         updateProgress();
     }
+
+    //show modal
+    function showModal() {
+        document.body.classList.add("modal-open");
+        let bd = document.createElement("div");
+        bd.classList.add("modal-backdrop", "fade", "show");
+        document.body.appendChild(bd);
+        $("#roomModal").setAttribute("style", "display: block");
+        $("#roomModal").setAttribute("aria-hidden", "false");
+        $("#roomModal").classList.add("in", "show");
+        setTimeout(function() {
+            $(".modal-content").classList.add("show");
+        }, 10);
+    }
+
+    //close modal
+    function closeModal() {
+        document.body.removeChild($(".modal-backdrop"));
+        document.body.classList.remove("modal-open");
+        $("#roomModal").setAttribute("style", "display: none");
+        $("#roomModal").setAttribute("aria-hidden", "true");
+        $("#roomModal").classList.remove("in", "show");
+        $(".modal-content").classList.remove("show");
+    }
+
+    $(".room").addEventListener("click", showModal);
+    $("#roomModal").addEventListener("click", closeModal);
 
     //********************************************
     // Spotify Playback Functions

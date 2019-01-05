@@ -51,11 +51,31 @@ body {
 }
 
 .song .name {
+    width: 90%;
     color: #b5d43c;
     font-size: 2.2rem;
+    display: inline-block;
+}
+
+.song .room {
+    background-color: #303030;
+    color: #c6c6c6;
+    font-size: 0.9rem;
+    border: solid 1px #454545;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    float: right;
+    display: inline-block;
+    transition: border-color 0.2s ease-out;
+}
+
+.room:hover {
+    cursor: pointer;
+    border-color: #606060;
 }
 
 .song .artist {
+    width: 90%;
     font-size: 1.2rem;
 }
 
@@ -89,6 +109,18 @@ body {
 .progress-bar {
     background-color: #b5d43c;
     border-radius: 1rem;
+}
+
+.modal-content {
+    background-color: #222426;
+    color: #c6c6c6;
+    border: solid 1px #454545;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.modal-content.show {
+    opacity: 1;
 }
 
 
