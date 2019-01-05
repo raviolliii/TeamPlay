@@ -51,7 +51,7 @@ body {
 }
 
 .song .name {
-    width: 90%;
+    width: 80%;
     color: #b5d43c;
     font-size: 2.2rem;
     display: inline-block;
@@ -75,7 +75,7 @@ body {
 }
 
 .song .artist {
-    width: 90%;
+    width: 80%;
     font-size: 1.2rem;
 }
 
