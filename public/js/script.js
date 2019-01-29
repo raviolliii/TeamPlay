@@ -5,7 +5,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     const redirectUri = "https://team--play.herokuapp.com/";
     //const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
-    const room = window.location.href.split("?room=")[1] || null;
+    const room = window.location.pathname.slice(1) || null;
     $(".room").innerText = room || "Private";
     var device = "";
     var admin = true;
@@ -26,7 +26,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     else if (getUrlHash()) {
         let {access_token, expires_in, state} = getUrlHash();
         document.cookie = `token=${access_token}; max-age=${expires_in}`
-        window.location.href = window.location.origin + (state ? `/?room=${state}` : "");
+        window.location.href = window.location.origin + (state ? `/${state}` : "");
     }
 
     //********************************************
@@ -60,6 +60,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         });
     }
 
+    //connect to a room (set event listener for song udpates)
     function connectRoom(room) {
         console.log("connected to room " + room)
         firebase.database().ref(room).on("value", function(snapshot) {
@@ -75,6 +76,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         });
     }
 
+    //disconnect from a room (remove db listener)
     function disconnectRoom(room) {
         firebase.database().ref(room).off();
     }

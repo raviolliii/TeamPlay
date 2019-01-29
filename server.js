@@ -12,7 +12,7 @@ app.use(express.static(path.resolve(__dirname)));
 // Express Routes
 //********************************************
 
-app.get("/", function(req, res) {
+app.get("*", function(req, res) {
     res.sendFile(__dirname + "/public/index.html");
 });
 
