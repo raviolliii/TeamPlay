@@ -57,7 +57,7 @@ body {
     display: inline-block;
 }
 
-.song .room {
+.song .party {
     background-color: #303030;
     color: #c6c6c6;
     font-size: 0.9rem;
@@ -69,7 +69,7 @@ body {
     transition: border-color 0.2s ease-out;
 }
 
-.room:hover {
+.party:hover {
     cursor: pointer;
     border-color: #606060;
 }
@@ -79,7 +79,7 @@ body {
     font-size: 1.2rem;
 }
 
-.mediaContainer {
+.media-container {
     font-size: 1.25rem;
     margin-top: 10%;
 }
@@ -100,6 +100,7 @@ body {
     height: 4px;
     border: 1rem;
     margin-top: 2%;
+    margin-bottom: 4%;
 }
 
 .progress:hover {
@@ -109,6 +110,12 @@ body {
 .progress-bar {
     background-color: #b5d43c;
     border-radius: 1rem;
+}
+
+.next-track {
+    color: #c6c6c6;
+    font-size: 1rem;
+    text-align: right;
 }
 
 .modal-content {

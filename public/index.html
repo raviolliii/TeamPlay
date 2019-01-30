@@ -14,9 +14,9 @@
             <div class = "cover"></div>
             <div class = "song">
                 <div class = "name"></div>
-                <div class = "room" data-toggle = "modal" data-target = "#roomModal"></div>
+                <div class = "party" data-toggle = "modal" data-target = "#partyModal"></div>
                 <div class = "artist"></div>
-                <div class = "mediaContainer">
+                <div class = "media-container">
                     <span class = "media prev">
                         <i class="icon fas fa-step-backward"></i>
                     </span>
@@ -29,15 +29,16 @@
                     <div class="progress">
                         <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
+                    <div class = "next-track"> Next: Some song here </div>
                 </div>
             </div>
         </div>
 
-        <div class="modal fade" id="roomModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal fade" id="partyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                    <div class="modal-body">
-                       shit goes here
+                       things go here
                     </div>
                 </div>
             </div>
@@ -46,6 +47,8 @@
         <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-app.js"></script>
         <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase-database.js"></script>
         <script src="https://sdk.scdn.co/spotify-player.js"></script>
+        <script src = "../public/js/firebase.js"></script>
+        <script src = "../public/js/helpers.js"></script>
         <script src = "../public/js/script.js"></script>
     </body>
 </html>

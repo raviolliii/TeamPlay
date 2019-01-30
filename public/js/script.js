@@ -1,18 +1,29 @@
+//==============================================================
+// script.js
+//
+// Main javascript file, loads and initializes the 
+// Spotify Web SDK, attaching listeners to control and 
+// update playback
+//==============================================================
+
+
 //when spotify web sdk loads
 window.onSpotifyWebPlaybackSDKReady = function() {
 
     const clientId = "87cf352cff9c4531874906ec651fd8d6";
-    const redirectUri = "https://team--play.herokuapp.com/";
-    //const redirectUri = "http://localhost:8080/";
+    //const redirectUri = "https://team--play.herokuapp.com/";
+    const redirectUri = "http://localhost:8080/";
     const scopes = "streaming user-modify-playback-state user-read-birthdate user-read-email user-read-private user-read-currently-playing";
-    const room = window.location.pathname.slice(1) || null;
-    $(".room").innerText = room || "Private";
+    const party = window.location.pathname.slice(1) || null;
+    $(".party").innerText = party || "Private";
     var device = "";
     var admin = true;
 
-    //********************************************
+
+    //==============================================================
     // Spotify Authentication
-    //********************************************
+    //==============================================================
+
 
     if (!getUrlHash() && !getCookies()) {
         let url = "https://accounts.spotify.com/authorize?";
@@ -20,7 +31,7 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         let res = `response_type=token&`;
         let red = `redirect_uri=${redirectUri}&`;
         let scope = `scope=${scopes}`;
-        let state = room ? `&state=${room}` : "";
+        let state = party ? `&state=${party}` : "";
         window.location.href = url + client + res + red + scope + state;
     }
     else if (getUrlHash()) {
@@ -29,61 +40,11 @@ window.onSpotifyWebPlaybackSDKReady = function() {
         window.location.href = window.location.origin + (state ? `/${state}` : "");
     }
 
-    //********************************************
-    // Firebase Setup
-    //********************************************
 
-    const fbConfig = {
-        apiKey: "AIzaSyBDd7bm48uwmG3-bryRQOitJm4D6WduvOg",
-        authDomain: "teamplay-12f75.firebaseapp.com",
-        databaseURL: "https://teamplay-12f75.firebaseio.com",
-        projectId: "teamplay-12f75",
-        storageBucket: "teamplay-12f75.appspot.com",
-        messagingSenderId: "194743848047"
-    };
-
-    firebase.initializeApp(fbConfig);
-
-    //write song data to database at room name
-    function writeRoomData(room, data) {
-        firebase.database().ref(room).update(data);
-    }
-
-    //read room data
-    function getRoomData(room, callback) {
-        if (!room) {
-            callback(null);
-            return;
-        }
-        firebase.database().ref(room).once("value", function(snapshot) {
-            callback(snapshot.val());
-        });
-    }
-
-    //connect to a room (set event listener for song udpates)
-    function connectRoom(room) {
-        console.log("connected to room " + room)
-        firebase.database().ref(room).on("value", function(snapshot) {
-            if (!admin && snapshot.val()) {
-                let {name, position} = snapshot.val();
-                if (name === $(".name").innerText) {
-                    console.log("seeking");
-                    player.seek(position).catch(console.error);
-                    return;
-                }
-                playSong(token, device, snapshot.val());
-            }
-        });
-    }
-
-    //disconnect from a room (remove db listener)
-    function disconnectRoom(room) {
-        firebase.database().ref(room).off();
-    }
-
-    //********************************************
+    //==============================================================
     // Spotify Playback Initialization
-    //********************************************
+    //==============================================================
+
 
     //initialize Spotify Player with token
     const token = getCookies().token;
@@ -97,115 +58,53 @@ window.onSpotifyWebPlaybackSDKReady = function() {
     player.addListener("authentication_error", console.error);
     player.addListener("account_error", console.error);
     player.addListener("playback_error", console.error);
-    player.addListener("not_ready", ({ device_id }) => {
-        console.log("Device ID has gone offline", device_id);
-    });
-    player.addListener("ready", ({ device_id }) => {
-        device = device_id;
-        getRoomData(room, function(data) {
-            setEventListeners();
-            if (data) {
-                admin = false;
-                connectRoom(room);
-                return;
-            }
-            transferPlayback(token, device_id);
-        });
-    });
+    player.addListener("not_ready", console.error);
+    player.addListener("ready", readyHandler);
     player.addListener('player_state_changed', stateChangeHandler);
 
     //connect the player
     player.connect();
 
-    //********************************************
-    // Base Functions
-    //********************************************
 
-    //allows jQuery like selection
-    function $(selector) {
-        return document.querySelector(selector);
-    }
+    //==============================================================
+    // Spotify Playback Functions
+    //==============================================================
 
-    //parse cookies and return an object with the data
-    function parseData(line, delim) {
-        let data = line.split(delim)
-            .reduce(function(acc, curr) {
-                let key = curr.split("=")[0];
-                let value = curr.split("=")[1];
-                key ? acc[key] = value : null;
-                return acc;
-            }, {});
-        return Object.keys(data).length ? data : null;
-    }
 
-    //gets cookies in object form
-    function getCookies() {
-        return parseData(document.cookie, "; ");
-    }
+    setInterval(function() {
+        player.getCurrentState()
+            .then(state => {
+                if (!state) {
+                    return;
+                }
+                let {position, duration, paused} = state;
+                updateProgress(position, duration);
+            })
+            .catch(console.error);
+    }, 1000);
 
-    //gets URL hash in object form
-    function getUrlHash() {
-        return parseData(window.location.hash.slice(1), "&");
-    }
-
-    //********************************************
-    // UI Functions
-    //********************************************
-
-    //updates progress bar using current state
-    function updateProgress() {
-        player.getCurrentState().then(state => {
-            if (!state) {
+    //playback ready listener
+    function readyHandler({ device_id }) {
+        device = device_id;
+        getPartyData(party, function(data) {
+            setEventListeners();
+            if (data) {
+                admin = false;
+                connectParty(party, function(snapshot) {
+                    if (!admin && snapshot.val()) {
+                        let {name, position} = snapshot.val();
+                        if (name === $(".name").innerText) {
+                            player.seek(position).catch(console.error);
+                            return;
+                        }
+                        playSong(token, device, snapshot.val());
+                    }
+                });
                 return;
             }
-            let position = state.position;
-            let duration = state.track_window.current_track.duration_ms;
-            let width = Math.round(100 * position / duration);
-            $(".progress-bar").style.width = width + "%";
+            transferPlayback(token, device_id);
         });
-        setTimeout(updateProgress, 50);
     }
-
-    //updates song title/artists using given data
-    function updateSongInfo(data) {
-        $(".cover").innerHTML = `<img src = "${data.imgUrl}"/>`;
-        $(".song .name").innerHTML = data.name;
-        $(".song .artist").innerHTML = data.artists;
-        $(".splash").style.visibility = "hidden";
-        $(".container").classList.remove("hidden");
-        updateProgress();
-    }
-
-    //show modal
-    function showModal() {
-        document.body.classList.add("modal-open");
-        let bd = document.createElement("div");
-        bd.classList.add("modal-backdrop", "fade", "show");
-        document.body.appendChild(bd);
-        $("#roomModal").setAttribute("style", "display: block");
-        $("#roomModal").setAttribute("aria-hidden", "false");
-        $("#roomModal").classList.add("in", "show");
-        setTimeout(function() {
-            $(".modal-content").classList.add("show");
-        }, 10);
-    }
-
-    //close modal
-    function closeModal() {
-        document.body.removeChild($(".modal-backdrop"));
-        document.body.classList.remove("modal-open");
-        $("#roomModal").setAttribute("style", "display: none");
-        $("#roomModal").setAttribute("aria-hidden", "true");
-        $("#roomModal").classList.remove("in", "show");
-        $(".modal-content").classList.remove("show");
-    }
-
-    $(".room").addEventListener("click", showModal);
-    $("#roomModal").addEventListener("click", closeModal);
-
-    //********************************************
-    // Spotify Playback Functions
-    //********************************************
 
     //play specific song
     function playSong(token, device, {uri, position}) {
@@ -240,18 +139,21 @@ window.onSpotifyWebPlaybackSDKReady = function() {
 
     //handles playback state changes
     //gets song data (name, artists, etc.) and updates UI
-    function stateChangeHandler({ position, duration, track_window: { current_track } }) {
+    function stateChangeHandler({ position, duration, track_window: { current_track, next_tracks } }) {
         let data = {
             uri: current_track.uri,
             imgUrl: current_track.album.images[0].url,
             name: current_track.name,
             artists: current_track.artists.map(e => e.name).join(", "),
             position: position,
-            duration: duration
+            duration: duration,
+            nextTrack: next_tracks[0] ? next_tracks[0].name : ""
         };
         updateSongInfo(data);
-        if (room && admin) {
-            writeRoomData(room, data);
+
+        //write update to firebase db if admin
+        if (party && admin) {
+            writePartyData(party, data);
         }
     }
 
